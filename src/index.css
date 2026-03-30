@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --font-inter: "Inter", sans-serif;
+  --font-poppins: "Poppins", sans-serif;
+  
+  --color-netflix-red: #E50914;
+  --color-netflix-black: #0a0a0a;
+  --color-netflix-gray: #1a1a1a;
+  
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@layer base {
+  body {
+    @apply bg-netflix-black text-white antialiased selection:bg-netflix-red selection:text-white font-inter;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/5;
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Compact simplicity classes */
+  .title-simple {
+    @apply text-lg md:text-xl font-semibold tracking-tight text-white mb-4;
+  }
+
+  .btn-simple {
+    @apply px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95 flex items-center justify-center gap-2;
+  }
+}
+
+/* Base styles for simple look */
+* {
+  @apply transition-colors duration-200;
+}
