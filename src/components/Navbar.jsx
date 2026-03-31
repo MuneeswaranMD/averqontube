@@ -84,15 +84,16 @@ const Navbar = ({ channelInfo, activeTab, onNavigate, onSearch }) => {
                 {isSearchOpen && (
                   <motion.div
                     initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: "180px", opacity: 1 }}
+                    animate={{ width: window.innerWidth < 768 ? "100vw" : "200px", opacity: 1 }}
                     exit={{ width: 0, opacity: 0 }}
-                    className="overflow-hidden mr-2 hidden md:block" // Hidden on small screens to prevent layout breakage, or you can adjust it
+                    className="absolute right-0 top-[52px] md:relative md:top-auto md:right-auto overflow-hidden z-[70] px-4 md:px-0 md:mr-2 bg-netflix-black/95 md:bg-transparent py-4 md:py-0 border-b border-white/5 md:border-none backdrop-blur-md md:backdrop-filter-none"
                   >
                     <form onSubmit={(e) => { 
                       e.preventDefault(); 
                       if (searchQuery.trim() && onSearch) { 
                         onSearch(searchQuery); 
                         setIsMobileMenuOpen(false); // Close mobile menu just in case
+                        if (window.innerWidth < 768) setIsSearchOpen(false); // auto-close on mobile
                       }
                     }}>
                       <input 
@@ -100,7 +101,7 @@ const Navbar = ({ channelInfo, activeTab, onNavigate, onSearch }) => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search videos..."
-                        className="w-full bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs text-white outline-none focus:border-netflix-red transition-all"
+                        className="w-full bg-white/10 border border-white/20 rounded-full px-5 py-3 md:py-1.5 text-sm md:text-xs text-white outline-none focus:border-netflix-red transition-all shadow-xl md:shadow-none"
                         autoFocus
                       />
                     </form>
