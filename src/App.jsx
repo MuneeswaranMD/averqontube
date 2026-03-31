@@ -48,7 +48,9 @@ const App = () => {
     shorts: [],
     playlists: [],
     studentChannel: null,
-    studentVideos: []
+    studentVideos: [],
+    searchResults: [],
+    searchQuery: ''
   });
 
   // Auth & Firestore logic
@@ -184,6 +186,20 @@ const App = () => {
   const handleNavigate = (tab) => {
     setSelectedPlaylist(null);
     setActiveTab(tab);
+  };
+
+  const handleSearch = async (query) => {
+    setActiveTab('Search');
+    setLoading(true);
+    try {
+      const results = await youtubeService.searchVideos(query, 24);
+      setData(prev => ({ ...prev, searchResults: results, searchQuery: query }));
+    } catch (err) {
+      console.error("Search Error:", err);
+      // We don't set a global error here to preserve the rest of the UI
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Views
@@ -345,7 +361,7 @@ const App = () => {
     const isQuotaError = error.includes("Sync failure") || error.includes("QUOTA_EXCEEDED");
     return (
       <div className="bg-netflix-black min-h-screen pt-20 flex flex-col items-center">
-         <Navbar channelInfo={data.channel} onNavigate={handleNavigate} activeTab={activeTab} />
+         <Navbar channelInfo={data.channel} onNavigate={handleNavigate} activeTab={activeTab} onSearch={handleSearch} />
          {activeTab === 'Admin' ? (user ? <AdminView /> : <LoginView />) : (
             <div className="flex-1 flex flex-col justify-center items-center p-6 text-center space-y-8 max-w-lg">
                <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center border border-white/10 animate-pulse">
@@ -372,7 +388,7 @@ const App = () => {
   if (loading || !data.channel) {
     return (
       <div className="bg-netflix-black min-h-screen pt-20 flex flex-col items-center justify-center">
-        <Navbar onNavigate={handleNavigate} activeTab={activeTab} />
+        <Navbar onNavigate={handleNavigate} activeTab={activeTab} onSearch={handleSearch} />
         <SkeletonLoading type="hero" />
       </div>
     );
@@ -382,7 +398,7 @@ const App = () => {
     return (
       <>
         <div className="bg-netflix-black min-h-screen">
-          <Navbar channelInfo={data.channel} onNavigate={handleNavigate} activeTab={activeTab} />
+          <Navbar channelInfo={data.channel} onNavigate={handleNavigate} activeTab={activeTab} onSearch={handleSearch} />
           <PlaylistDetails 
             playlist={selectedPlaylist} 
             videos={playlistVideos} 
@@ -399,7 +415,7 @@ const App = () => {
 
   return (
     <div className="bg-netflix-black min-h-screen text-white font-inter antialiased text-sm scroll-smooth">
-      <Navbar channelInfo={data.channel} onNavigate={handleNavigate} activeTab={activeTab} />
+      <Navbar channelInfo={data.channel} onNavigate={handleNavigate} activeTab={activeTab} onSearch={handleSearch} />
       <main className="relative w-full max-w-[1920px] mx-auto overflow-hidden">
         {activeTab === 'Explore' && (
           <>
@@ -435,6 +451,25 @@ const App = () => {
         {activeTab === 'Originals' && <div className="pt-24 px-4 md:px-12 min-h-screen"><h2 className="text-xl md:text-2xl font-bold uppercase mb-12 tracking-tight">Pure Originals</h2><div className="grid grid-cols-1 md:grid-cols-4 gap-8">{data.videos.map(v => (<div key={v.id} onClick={() => handlePlayVideo(v)} className="cursor-pointer group"><img src={v.thumbnail} className="rounded-xl mb-4 grayscale group-hover:grayscale-0 transition-all border border-white/5" /><h3 className="font-bold text-sm line-clamp-1">{v.title}</h3></div>))}</div></div>}
         {activeTab === 'Trending' && <div className="pt-24 px-4 md:px-12 min-h-screen"><h2 className="text-xl md:text-2xl font-bold uppercase mb-12 tracking-tight">Tamil Trending Hub</h2><div className="grid grid-cols-1 md:grid-cols-4 gap-8">{data.trending.map(v => (<div key={v.id} onClick={() => handlePlayVideo(v)} className="cursor-pointer group"><img src={v.thumbnail} className="rounded-xl mb-4 grayscale group-hover:grayscale-0 transition-all border border-white/5" /><h3 className="font-bold text-sm line-clamp-1">{v.title}</h3></div>))}</div></div>}
         {activeTab === 'Playlists' && <div className="pt-24 px-4 md:px-12 min-h-screen"><h2 className="text-xl md:text-2xl font-bold uppercase mb-12 tracking-tight">Curated Series</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{data.playlists.map((p, i) => (<PlaylistCard key={p.id} playlist={p} index={i} onOpen={() => handleViewPlaylist(p)} />))}</div></div>}
+        {activeTab === 'Search' && (
+          <div className="pt-24 px-4 md:px-12 min-h-screen">
+            <h2 className="text-xl md:text-2xl font-bold uppercase mb-4 tracking-tight">Search Results</h2>
+            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-12">Results for: <span className="text-white">{data.searchQuery}</span></p>
+            {data.searchResults.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                {data.searchResults.map(v => (
+                  <div key={v.id} onClick={() => handlePlayVideo(v)} className="cursor-pointer group">
+                    <img src={v.thumbnail} className="rounded-xl mb-4 grayscale group-hover:grayscale-0 transition-all border border-white/5" />
+                    <h3 className="font-bold text-sm line-clamp-2">{v.title}</h3>
+                    <p className="text-xs text-white/50 mt-1">{v.views} • {v.publishedAt}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-white/40 text-sm">No results found.</p>
+            )}
+          </div>
+        )}
         {activeTab === 'Studio' && <StudioView />}
         {activeTab === 'Admin' && (user ? <AdminView /> : <LoginView />)}
       </main>

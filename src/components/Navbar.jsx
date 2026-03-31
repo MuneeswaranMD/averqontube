@@ -3,9 +3,11 @@ import { Search, Bell, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 
-const Navbar = ({ channelInfo, activeTab, onNavigate }) => {
+const Navbar = ({ channelInfo, activeTab, onNavigate, onSearch }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -76,7 +78,47 @@ const Navbar = ({ channelInfo, activeTab, onNavigate }) => {
           </div>
 
           <div className="flex items-center gap-5 md:gap-7">
-            <Search size={18} className="text-white cursor-pointer opacity-40 hover:opacity-100 transition-opacity" />
+            {/* Search toggler */}
+            <div className="flex items-center">
+              <AnimatePresence>
+                {isSearchOpen && (
+                  <motion.div
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: "180px", opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    className="overflow-hidden mr-2 hidden md:block" // Hidden on small screens to prevent layout breakage, or you can adjust it
+                  >
+                    <form onSubmit={(e) => { 
+                      e.preventDefault(); 
+                      if (searchQuery.trim() && onSearch) { 
+                        onSearch(searchQuery); 
+                        setIsMobileMenuOpen(false); // Close mobile menu just in case
+                      }
+                    }}>
+                      <input 
+                        type="text" 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search videos..."
+                        className="w-full bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs text-white outline-none focus:border-netflix-red transition-all"
+                        autoFocus
+                      />
+                    </form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <Search 
+                size={18} 
+                className="text-white cursor-pointer opacity-40 hover:opacity-100 transition-opacity" 
+                onClick={() => {
+                  if (isSearchOpen && searchQuery.trim() && onSearch) {
+                    onSearch(searchQuery);
+                  }
+                  setIsSearchOpen(!isSearchOpen);
+                }}
+              />
+            </div>
+            
             <Bell size={18} className="text-white cursor-pointer opacity-40 hover:opacity-100 transition-opacity" />
             
             {/* Profile Avatar */}

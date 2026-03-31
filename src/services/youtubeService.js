@@ -208,6 +208,48 @@ export const fetchTrendingVideos = async (maxResults = 14) => {
 };
 
 /**
+ * Search Videos
+ */
+export const searchVideos = async (query, maxResults = 12) => {
+    try {
+        if (!query || !getApiKey()) return [];
+
+        const cached = getCache(`search_${query}`);
+        if (cached) return cached;
+
+        const searchRes = await fetch(`${BASE_URL}/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=${maxResults}&key=${getApiKey()}`);
+        const searchData = await searchRes.json();
+
+        if (searchRes.status === 403) throw new Error("QUOTA_EXCEEDED");
+        if (!searchData.items?.length) return [];
+
+        const videoIds = searchData.items.filter(item => item.id?.videoId).map(item => item.id.videoId).join(',');
+        
+        // Fetch full video details
+        const detailsRes = await fetch(`${BASE_URL}/videos?part=snippet,contentDetails,statistics&id=${videoIds}&key=${getApiKey()}`);
+        const detailsData = await detailsRes.json();
+
+        if (!detailsData.items) return [];
+
+        const result = detailsData.items.map(item => ({
+            id: item.id,
+            title: item.snippet.title,
+            thumbnail: item.snippet.thumbnails.maxres?.url || item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url || '',
+            publishedAt: formatDate(item.snippet.publishedAt),
+            views: formatCount(item.statistics.viewCount),
+            duration: formatDuration(item.contentDetails.duration),
+            description: item.snippet.description
+        }));
+        
+        setCache(`search_${query}`, result);
+        return result;
+    } catch (error) {
+        console.error('Error fetching search videos:', error);
+        return [];
+    }
+};
+
+/**
  * Fetch Playlists
  */
 export const fetchChannelPlaylists = async (identifier = DEFAULT_CHANNEL_ID, maxResults = 8) => {
